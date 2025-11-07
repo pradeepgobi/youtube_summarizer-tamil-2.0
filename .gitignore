@@ -1,0 +1,35 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info
+.pytest_cache
+.ipynb_checkpoints
+
+# Virtual environment
+venv/
+env/
+
+# Audio files
+*.mp3
+*.wav
+*.m4a
+*.flac
+
+# Large binary files
+*.exe
+ffmpeg/bin/
+ffmpeg/doc/
+
+# External libraries (install separately)
+whisper-main/
+
+# OS files
+thumbs.db
+.DS_Store
+.idea
+
+# Temporary files
+temp/
+tmp/
+input.*
+

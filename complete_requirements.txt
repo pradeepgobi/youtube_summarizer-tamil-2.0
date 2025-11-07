@@ -1,0 +1,30 @@
+# Core Whisper dependencies
+numba
+numpy
+torch
+tqdm
+more-itertools
+tiktoken
+
+# Streamlit and web app
+streamlit
+requests
+
+# YouTube and video processing
+yt-dlp
+youtube-transcript-api
+
+# Language processing
+deep-translator
+langdetect
+transformers
+
+# LangChain for LLM integration
+langchain-ollama
+langchain-core
+
+# Audio processing
+openai-whisper
+
+# Optional: for GPU acceleration (if you have NVIDIA GPU)
+# triton>=2.0.0

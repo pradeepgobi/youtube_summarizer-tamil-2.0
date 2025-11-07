@@ -1,0 +1,25 @@
+[server]
+# Improve server performance
+runOnSave = true
+port = 8501
+enableCORS = false
+enableXsrfProtection = false
+
+[browser]
+# Reduce resource usage
+gatherUsageStats = false
+
+[theme]
+# Faster theme loading
+primaryColor = "#667eea"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f2f6"
+
+[runner]
+# Improve execution performance
+magicEnabled = true
+fastReruns = true
+
+[client]
+# Reduce client overhead
+showErrorDetails = false
