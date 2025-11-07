@@ -1,174 +1,217 @@
-# Requirements
+# YouTube Video Summarizer Tamil 2.0
 
-* Python 3.8+
-* torch (with CUDA for GPU acceleration, highly recommended for Whisper)
-* ffmpeg (must be in PATH)
-* yt-dlp
-* openai-whisper
-* transformers
-* streamlit
+A powerful Streamlit web application that downloads YouTube videos, transcribes them using OpenAI's Whisper, and provides AI-powered summaries. Specially optimized for Tamil content with enhanced NLP processing.
 
-For best performance, use a machine with an NVIDIA GPU and CUDA drivers installed. On CPU, Whisper transcription will be much slower, especially for long videos.
-# Whisper
+## ✨ Features
 
-[[Blog]](https://openai.com/blog/whisper)
-[[Paper]](https://arxiv.org/abs/2212.04356)
-[[Model card]](https://github.com/openai/whisper/blob/main/model-card.md)
-[[Colab example]](https://colab.research.google.com/github/openai/whisper/blob/master/notebooks/LibriSpeech.ipynb)
+- **YouTube Video Processing**: Download videos from YouTube URLs
+- **Multi-format Audio Support**: Supports MP3, WAV, M4A audio files
+- **Advanced Transcription**: Uses OpenAI Whisper for accurate speech-to-text
+- **AI-Powered Summaries**: Generates intelligent summaries using Hugging Face transformers
+- **Tamil Language Support**: Enhanced processing for Tamil content
+- **User-Friendly Interface**: Clean Streamlit web interface
+- **Progress Tracking**: Real-time progress indicators
+- **Error Handling**: Robust error management and user feedback
 
-Whisper is a general-purpose speech recognition model. It is trained on a large dataset of diverse audio and is also a multitasking model that can perform multilingual speech recognition, speech translation, and language identification.
+## 🚀 Quick Start
 
+### Prerequisites
 
-## Approach
+- Python 3.8 or higher
+- Git
+- FFmpeg (for audio processing)
 
-![Approach](https://raw.githubusercontent.com/openai/whisper/main/approach.png)
+### Installation
 
-A Transformer sequence-to-sequence model is trained on various speech processing tasks, including multilingual speech recognition, speech translation, spoken language identification, and voice activity detection. These tasks are jointly represented as a sequence of tokens to be predicted by the decoder, allowing a single model to replace many stages of a traditional speech-processing pipeline. The multitask training format uses a set of special tokens that serve as task specifiers or classification targets.
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/pradeepgobi/youtube_summarizer-tamil-2.0.git
+   cd youtube_summarizer-tamil-2.0
+   ```
 
+2. **Set up Python environment:**
+   ```bash
+   # Create virtual environment
+   python -m venv venv
+   
+   # Activate virtual environment
+   # On Windows:
+   venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
+   ```
 
-## Setup
+3. **Install Python dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-We used Python 3.9.9 and [PyTorch](https://pytorch.org/) 1.10.1 to train and test our models, but the codebase is expected to be compatible with Python 3.8-3.11 and recent PyTorch versions. The codebase also depends on a few Python packages, most notably [OpenAI's tiktoken](https://github.com/openai/tiktoken) for their fast tokenizer implementation. You can download and install (or update to) the latest release of Whisper with the following command:
+4. **Install FFmpeg:**
+   
+   **Windows:**
+   - Download from [https://www.gyan.dev/ffmpeg/builds/](https://www.gyan.dev/ffmpeg/builds/)
+   - Extract the executables (ffmpeg.exe, ffplay.exe, ffprobe.exe)
+   - Place them in the `ffmpeg/bin/` directory
+   - Or install using package managers:
+     ```bash
+     # Using Chocolatey
+     choco install ffmpeg
+     
+     # Using Scoop
+     scoop install ffmpeg
+     ```
+   
+   **macOS:**
+   ```bash
+   brew install ffmpeg
+   ```
+   
+   **Linux (Ubuntu/Debian):**
+   ```bash
+   sudo apt update && sudo apt install ffmpeg
+   ```
 
-    pip install -U openai-whisper
+5. **Install Whisper:**
+   ```bash
+   pip install -U openai-whisper
+   ```
 
-Alternatively, the following command will pull and install the latest commit from this repository, along with its Python dependencies:
-
-    pip install git+https://github.com/openai/whisper.git 
-
-To update the package to the latest version of this repository, please run:
-
-    pip install --upgrade --no-deps --force-reinstall git+https://github.com/openai/whisper.git
-
-It also requires the command-line tool [`ffmpeg`](https://ffmpeg.org/) to be installed on your system, which is available from most package managers:
-
-```bash
-# on Ubuntu or Debian
-sudo apt update && sudo apt install ffmpeg
-
-# on Arch Linux
-sudo pacman -S ffmpeg
-
-# on MacOS using Homebrew (https://brew.sh/)
-brew install ffmpeg
-
-# on Windows using Chocolatey (https://chocolatey.org/)
-choco install ffmpeg
-
-# on Windows using Scoop (https://scoop.sh/)
-scoop install ffmpeg
-```
-
-You may need [`rust`](http://rust-lang.org) installed as well, in case [tiktoken](https://github.com/openai/tiktoken) does not provide a pre-built wheel for your platform. If you see installation errors during the `pip install` command above, please follow the [Getting started page](https://www.rust-lang.org/learn/get-started) to install Rust development environment. Additionally, you may need to configure the `PATH` environment variable, e.g. `export PATH="$HOME/.cargo/bin:$PATH"`. If the installation fails with `No module named 'setuptools_rust'`, you need to install `setuptools_rust`, e.g. by running:
-
-```bash
-pip install setuptools-rust
-```
-
-
-## Available models and languages
-
-There are six model sizes, four with English-only versions, offering speed and accuracy tradeoffs.
-Below are the names of the available models and their approximate memory requirements and inference speed relative to the large model.
-The relative speeds below are measured by transcribing English speech on a A100, and the real-world speed may vary significantly depending on many factors including the language, the speaking speed, and the available hardware.
-
-|  Size  | Parameters | English-only model | Multilingual model | Required VRAM | Relative speed |
-|:------:|:----------:|:------------------:|:------------------:|:-------------:|:--------------:|
-|  tiny  |    39 M    |     `tiny.en`      |       `tiny`       |     ~1 GB     |      ~10x      |
-|  base  |    74 M    |     `base.en`      |       `base`       |     ~1 GB     |      ~7x       |
-| small  |   244 M    |     `small.en`     |      `small`       |     ~2 GB     |      ~4x       |
-| medium |   769 M    |    `medium.en`     |      `medium`      |     ~5 GB     |      ~2x       |
-| large  |   1550 M   |        N/A         |      `large`       |    ~10 GB     |       1x       |
-| turbo  |   809 M    |        N/A         |      `turbo`       |     ~6 GB     |      ~8x       |
-
-The `.en` models for English-only applications tend to perform better, especially for the `tiny.en` and `base.en` models. We observed that the difference becomes less significant for the `small.en` and `medium.en` models.
-Additionally, the `turbo` model is an optimized version of `large-v3` that offers faster transcription speed with a minimal degradation in accuracy.
-
-Whisper's performance varies widely depending on the language. The figure below shows a performance breakdown of `large-v3` and `large-v2` models by language, using WERs (word error rates) or CER (character error rates, shown in *Italic*) evaluated on the Common Voice 15 and Fleurs datasets. Additional WER/CER metrics corresponding to the other models and datasets can be found in Appendix D.1, D.2, and D.4 of [the paper](https://arxiv.org/abs/2212.04356), as well as the BLEU (Bilingual Evaluation Understudy) scores for translation in Appendix D.3.
-
-![WER breakdown by language](https://github.com/openai/whisper/assets/266841/f4619d66-1058-4005-8f67-a9d811b77c62)
-
-## Command-line usage
-
-The following command will transcribe speech in audio files, using the `turbo` model:
+### Running the Application
 
 ```bash
-whisper audio.flac audio.mp3 audio.wav --model turbo
+streamlit run app.py
 ```
 
-The default setting (which selects the `turbo` model) works well for transcribing English. However, **the `turbo` model is not trained for translation tasks**. If you need to **translate non-English speech into English**, use one of the **multilingual models** (`tiny`, `base`, `small`, `medium`, `large`) instead of `turbo`. 
+The application will be available at `http://localhost:8501`
 
-For example, to transcribe an audio file containing non-English speech, you can specify the language:
+## 📖 Usage
 
+1. **Start the application** using the command above
+2. **Enter a YouTube URL** or upload an audio file
+3. **Select processing options** (transcription model, summary length, etc.)
+4. **Click "Process"** and wait for the results
+5. **View transcription and summary** in the interface
+6. **Download results** as text files if needed
+
+## 🛠️ Configuration
+
+### Whisper Models
+
+Choose from different Whisper models based on your needs:
+
+- `tiny`: Fastest, least accurate (~39M parameters)
+- `base`: Good balance of speed and accuracy (~74M parameters)
+- `small`: Better accuracy (~244M parameters) - **Recommended**
+- `medium`: High accuracy (~769M parameters)
+- `large`: Best accuracy (~1550M parameters)
+
+### GPU Acceleration
+
+For faster processing, ensure you have CUDA installed:
 ```bash
-whisper japanese.wav --language Japanese
+pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu118
 ```
 
-To **translate** speech into English, use:
+## 📁 Project Structure
 
-```bash
-whisper japanese.wav --model medium --language Japanese --task translate
+```
+youtube_summarizer-tamil-2.0/
+├── app.py                    # Main Streamlit application
+├── youtube_video_summarizer.py  # Core processing logic
+├── tamil_nlp_utils.py       # Tamil language utilities
+├── requirements.txt         # Python dependencies
+├── complete_requirements.txt # Extended dependencies
+├── .streamlit/             # Streamlit configuration
+├── images/                 # UI assets
+└── ffmpeg/                 # FFmpeg binaries (download separately)
+    ├── bin/                # Place FFmpeg executables here
+    └── presets/           # FFmpeg presets
 ```
 
-> **Note:** The `turbo` model will return the original language even if `--task translate` is specified. Use `medium` or `large` for the best translation results.
+## 🔧 Dependencies
 
-Run the following to view all available options:
+### Core Requirements
+- `streamlit` - Web interface
+- `openai-whisper` - Speech recognition
+- `yt-dlp` - YouTube video download
+- `transformers` - AI summarization
+- `torch` - Deep learning framework
+- `ffmpeg-python` - Audio processing
 
-```bash
-whisper --help
-```
+### Optional Dependencies
+- `cuda` - GPU acceleration
+- `scipy` - Scientific computing
+- `librosa` - Audio analysis
 
-See [tokenizer.py](https://github.com/openai/whisper/blob/main/whisper/tokenizer.py) for the list of all available languages.
+## 🌟 Advanced Features
 
+### Tamil Language Processing
+The application includes specialized processing for Tamil content:
+- Enhanced tokenization
+- Language-specific preprocessing
+- Improved accuracy for Tamil speech recognition
 
-## Python usage
+### Batch Processing
+Process multiple videos by providing a list of URLs (feature in development).
 
-Transcription can also be performed within Python: 
+### Custom Models
+Support for custom Whisper models and fine-tuned versions.
 
-```python
-import whisper
+## ⚙️ Setup Notes
 
-model = whisper.load_model("turbo")
-result = model.transcribe("audio.mp3")
-print(result["text"])
-```
+### FFmpeg Installation
+Since FFmpeg binaries are large (500MB+), they are not included in the repository. You need to:
 
-Internally, the `transcribe()` method reads the entire file and processes the audio with a sliding 30-second window, performing autoregressive sequence-to-sequence predictions on each window.
+1. Download FFmpeg from [https://www.gyan.dev/ffmpeg/builds/](https://www.gyan.dev/ffmpeg/builds/)
+2. Extract the following files to `ffmpeg/bin/`:
+   - `ffmpeg.exe`
+   - `ffplay.exe`  
+   - `ffprobe.exe`
 
-Below is an example usage of `whisper.detect_language()` and `whisper.decode()` which provide lower-level access to the model.
+### Whisper Model Download
+Whisper models will be automatically downloaded on first use. Ensure you have sufficient disk space:
+- tiny: ~39 MB
+- base: ~74 MB
+- small: ~244 MB
+- medium: ~769 MB
+- large: ~1550 MB
 
-```python
-import whisper
+## 🤝 Contributing
 
-model = whisper.load_model("turbo")
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-# load audio and pad/trim it to fit 30 seconds
-audio = whisper.load_audio("audio.mp3")
-audio = whisper.pad_or_trim(audio)
+## 📄 License
 
-# make log-Mel spectrogram and move to the same device as the model
-mel = whisper.log_mel_spectrogram(audio, n_mels=model.dims.n_mels).to(model.device)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-# detect the spoken language
-_, probs = model.detect_language(mel)
-print(f"Detected language: {max(probs, key=probs.get)}")
+## 🙏 Acknowledgments
 
-# decode the audio
-options = whisper.DecodingOptions()
-result = whisper.decode(model, mel, options)
+- [OpenAI Whisper](https://github.com/openai/whisper) for speech recognition
+- [Hugging Face Transformers](https://huggingface.co/transformers/) for summarization
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) for YouTube video downloading
+- [Streamlit](https://streamlit.io/) for the web interface
 
-# print the recognized text
-print(result.text)
-```
+## 📞 Support
 
-## More examples
+If you encounter any issues or have questions:
 
-Please use the [🙌 Show and tell](https://github.com/openai/whisper/discussions/categories/show-and-tell) category in Discussions for sharing more example usages of Whisper and third-party extensions such as web demos, integrations with other tools, ports for different platforms, etc.
+1. Check the [Issues](https://github.com/pradeepgobi/youtube_summarizer-tamil-2.0/issues) page
+2. Create a new issue with detailed information
+3. Contact: pradeepgobi@example.com
 
+## 📈 Roadmap
 
-## License
+- [ ] Batch processing support
+- [ ] Multiple language support
+- [ ] Custom model training
+- [ ] API endpoints
+- [ ] Docker containerization
+- [ ] Cloud deployment options
 
-Whisper's code and model weights are released under the MIT License. See [LICENSE](https://github.com/openai/whisper/blob/main/LICENSE) for further details.
-#   y o u t u b e _ s u m m a r i z e r - t a m i l - 2 . 0  
- #   y o u t u b e _ s u m m a r i z e r - t a m i l - 2 . 0  
- 
+---
+
+**Made with ❤️ for the Tamil community**
